@@ -16,11 +16,11 @@ import rotations
 # This is where you will load the data from the pickle files. For parts 1 and 2, you will use
 # p1_data.pkl. For Part 3, you will use pt3_data.pkl.
 ################################################################################################
-with open('data/pt1_data.pkl', 'rb') as file:
-    data = pickle.load(file)
+#with open('data/pt1_data.pkl', 'rb') as file:
+#    data = pickle.load(file)
 
-# with open('data/pt3_data.pkl', 'rb') as file:
-#     data = pickle.load(file)
+with open('data/pt3_data.pkl', 'rb') as file:
+    data = pickle.load(file)
 ################################################################################################
 # Each element of the data dictionary is stored as an item from the data dictionary, which we
 # will store in local variables, described by the following:
@@ -74,7 +74,7 @@ plt.show()
 #
 # THIS IS THE CODE YOU WILL MODIFY FOR PART 2 OF THE ASSIGNMENT.
 ################################################################################################
-# Correct calibration rotation matrix, corresponding to Euler RPY angles (0.05, 0.05, 0.1).
+# Correct calibration rotation matrix, corresponding to Euler RPY angles (0.05 #2.866, 0.05 #2.866, 0.1 #5.73).
 C_li = np.array([
    [ 0.99376, -0.09722,  0.05466],
    [ 0.09971,  0.99401, -0.04475],
@@ -103,9 +103,9 @@ lidar.data = (C_li @ lidar.data.T).T + t_i_li
 ################################################################################################
 var_imu_f = 0.10
 var_imu_w = 0.25
-var_gnss  = 0.01  # default: 0.01
+var_gnss  = 10    # default: 0.01
                   # good choice for part 3: 10.00
-var_lidar = 1.00  # default: 1.00
+var_lidar = 10.00 # default: 1.00
                   # good choice for part 2: 100.00
                   # good choice for part 3: 10.00
 
@@ -115,8 +115,10 @@ var_lidar = 1.00  # default: 1.00
 g = np.array([0, 0, -9.81])  # gravity
 l_jac = np.zeros([9, 6])
 l_jac[3:, :] = np.eye(6)  # motion model noise jacobian
+#print(l_jac)
 h_jac = np.zeros([3, 9])
 h_jac[:, :3] = np.eye(3)  # measurement model jacobian
+#print(h_jac)
 
 #### 3. Initial Values #########################################################################
 
@@ -127,15 +129,16 @@ p_est = np.zeros([imu_f.data.shape[0], 3])  # position estimates
 v_est = np.zeros([imu_f.data.shape[0], 3])  # velocity estimates
 q_est = np.zeros([imu_f.data.shape[0], 4])  # orientation estimates as quaternions
 p_cov = np.zeros([imu_f.data.shape[0], 9, 9])  # covariance matrices at each timestep
+#print(p_cov.shape)
 
 # Set initial values.
 p_est[0] = gt.p[0]
 v_est[0] = gt.v[0]
 q_est[0] = Quaternion( euler = gt.r[0] ).to_numpy()
 print("q_est[0] =", q_est[0])
-C_ns_0 = Quaternion(*q_est[0]).to_mat()
+C_ns_0 = Quaternion(*q_est[0]).to_mat() #C_ns_0 is a rotation matrix
 print("C_ns_0 =", C_ns_0)
-p_cov[0] = np.zeros(9)  # covariance of estimate
+p_cov[0] = np.zeros(9)  # covariance of first estimate
 gnss_i  = 0
 lidar_i = 0
 
@@ -221,7 +224,7 @@ for k in range(1, imu_f.data.shape[0]):  # start at 1 b/c we have initial predic
     # some preparations
     delta_t = imu_f.t[k] - imu_f.t[k - 1]
     Q_k = Q * delta_t * delta_t
-    C_ns = Quaternion(*q_est[k-1]).to_mat()
+    C_ns = Quaternion(*q_est[k-1]).to_mat() #C_ns is rotation matrix from IMU (Vehicle) frame to Inertial frame
     # print("C_ns = ", C_ns)
 
     # 1. Update state with IMU inputs
@@ -341,28 +344,28 @@ plt.show()
 ################################################################################################
 
 # Pt. 1 submission
-p1_indices = [9000, 9400, 9800, 10200, 10600]
-p1_str = ''
-for val in p1_indices:
-    for i in range(3):
-        p1_str += '%.3f ' % (p_est[val, i])
-with open('pt1_submission.txt', 'w') as file:
-    file.write(p1_str)
+#p1_indices = [9000, 9400, 9800, 10200, 10600]
+#p1_str = ''
+#for val in p1_indices:
+#    for i in range(3):
+#        p1_str += '%.3f ' % (p_est[val, i])
+#with open('pt1_submission.txt', 'w') as file:
+ #   file.write(p1_str)
 
 # Pt. 2 submission
-# p2_indices = [9000, 9400, 9800, 10200, 10600]
-# p2_str = ''
-# for val in p2_indices:
-#     for i in range(3):
+#p2_indices = [9000, 9400, 9800, 10200, 10600]
+#p2_str = ''
+#for val in p2_indices:
+#    for i in range(3):
 #         p2_str += '%.3f ' % (p_est[val, i])
-# with open('pt2_submission.txt', 'w') as file:
-#     file.write(p2_str)
+#with open('pt2_submission.txt', 'w') as file:
+#    file.write(p2_str)
 
 # Pt. 3 submission
-# p3_indices = [6800, 7600, 8400, 9200, 10000]
-# p3_str = ''
-# for val in p3_indices:
-#     for i in range(3):
-#         p3_str += '%.3f ' % (p_est[val, i])
-# with open('pt3_submission.txt', 'w') as file:
-#     file.write(p3_str)
+p3_indices = [6800, 7600, 8400, 9200, 10000]
+p3_str = ''
+for val in p3_indices:
+     for i in range(3):
+         p3_str += '%.3f ' % (p_est[val, i])
+with open('pt3_submission.txt', 'w') as file:
+     file.write(p3_str)
